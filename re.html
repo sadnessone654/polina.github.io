@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Для самой особенной</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            transition: background-color 0.5s;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        #flower {
+            width: 150px;
+            height: 150px;
+            transition: transform 0.3s;
+            animation: pulse 2s infinite alternate;
+            z-index: 10;
+        }
+        
+        @keyframes pulse {
+            from { transform: scale(0.95); }
+            to { transform: scale(1.05); }
+        }
+        
+        #heart-canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 2s;
+            z-index: 1;
+        }
+        
+        .compliment {
+            position: absolute;
+            color: white;
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 2;
+            width: 80%;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .final-congratulation {
+            position: absolute;
+            color: white;
+            font-size: 1.8rem;
+            text-align: center;
+            width: 80%;
+            max-width: 800px;
+            opacity: 0;
+            z-index: 3;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+            line-height: 1.6;
+            transition: opacity 2s;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .final-congratulation p {
+            margin: 20px 0;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s, transform 1s;
+        }
+        
+        .dark-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0);
+            z-index: 2;
+            transition: background-color 3s;
+        }
+    </style>
+</head>
+<body>
+    <img src="flower.png" alt="Цветок" id="flower">
+    
+    <canvas id="heart-canvas"></canvas>
+    <div class="dark-overlay" id="darkOverlay"></div>
+    <div id="compliment-container" class="compliment"></div>
+    <div class="final-congratulation" id="finalCongratulation">
+        <p>Дорогая Полина,</p>
+        <p>Поздравляю тебя с этим прекрасным днём! Желаю радоваться жизни, каждому солнечному и дождливому дню, не боятся пчелок и шмелей и всегда дарить добро не только людям, но и себе</p>
+        <p>С днем рождения!</p>
+    </div>
+    
+    <script>
+        // Список комплиментов
+        const compliments = [
+            "Самая умная", "Самая красивая", "Самая добрая", "Самая нежная", "Самая заботливая",
+            "Самая талантливая", "Самая милая", "Самая солнечная", "Самая вдохновляющая", "Самая стильная",
+            "Самая обаятельная", "Самая грациозная", "Самая романтичная", "Самая искренняя", "Самая душевная",
+            "Самая загадочная", "Самая мудрая", "Самая яркая", "Самая креативная", "Самая ласковая",
+            "Самая неотразимая", "Самая женственная", "Самая смелая", "Самая чуткая", "Самая позитивная",
+            "Самая очаровательная", "Самая элегантная", "Самая гармоничная", "Самая искромётная", "Самая добрая сердцем",
+            "Самая преданная", "Самая невероятная", "Самая лучистая", "Самая волшебная", "Самая сказочная",
+            "Самая мечтательная", "Самая зажигательная", "Самая уютная", "Самая желанная", "Самая любимая",
+            "Самая неповторимая", "Самая восхитительная", "Самая чарующая", "Самая безупречная", "Самая воздушная",
+            "Самая страстная", "Самая нежная, как весенний ветерок", "Самая искренняя в своих эмоциях", "Самая душевно красивая", "Самая обворожительная",
+            "Самая лёгкая в общении", "Самая понимающая", "Самая терпеливая", "Самая находчивая", "Самая артистичная",
+            "Самая музыкальная", "Самая заботливая подруга", "Самая надёжная", "Самая вдохновляющая муза", "Самая нежная, как шёлк",
+            "Самая искренняя улыбка в моей жизни", "Самая душевная собеседница", "Самая волнующая", "Самая желанная мечта", "Самая пленительная",
+            "Самая грациозная, как кошка", "Самая элегантная леди", "Самая обаятельная улыбка", "Самая солнечная девушка", "Самая тёплая, как плед в холода",
+            "Самая нежная, как первый снег", "Самая яркая звезда", "Самая манящая", "Самая загадочная, как океан", "Самая вкусно пахнущая",
+            "Самая утончённая", "Самая волшебная фея", "Самая притягательная", "Самая желанная", "Самая ласковая кошечка",
+            "Самая нежная, как лепесток розы", "Самая душевно богатая", "Самая искренняя в своих чувствах", "Самая преданная из всех", "Самая заботливая, как мама",
+            "Самая желанная в моих мечтах", "Самая невероятная женщина", "Самая любимая на свете", "Самая желанная в моей судьбе", "Самая нежная, как шёпот ветра",
+            "Самая красивая душой", "Самая светлая в моей жизни", "Самая желанная, как счастье", "Самая нежная, как утро", "Самая душевная, как песня",
+            "Самая искренняя, как детство", "Самая любимая, как жизнь", "Самая желанная, как мечта", "Самая прекрасная", "Самая хорошая"
+        ];
+        
+        // Элементы DOM
+        const flower = document.getElementById('flower');
+        const complimentContainer = document.getElementById('compliment-container');
+        const finalCongratulation = document.getElementById('finalCongratulation');
+        const canvas = document.getElementById('heart-canvas');
+        const ctx = canvas.getContext('2d');
+        const darkOverlay = document.getElementById('darkOverlay');
+        
+        // Настройки анимации
+        let currentIndex = 0;
+        let currentSpeed = 1000; // начальная скорость (мс)
+        let complimentInterval;
+        let isStarted = false;
+        
+        // Инициализация canvas
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        }
+        
+        // Показ комплимента
+        function showCompliment() {
+            if (currentIndex >= compliments.length) {
+                endCompliments();
+                return;
+            }
+            
+            // Устанавливаем текст комплимента
+            complimentContainer.textContent = compliments[currentIndex];
+            complimentContainer.style.opacity = 1;
+            
+            // Случайный яркий цвет текста
+            const randomColor = `hsl(${Math.random() * 360}, 100%, 70%)`;
+            complimentContainer.style.color = randomColor;
+            
+            // Через короткое время скрываем комплимент
+            setTimeout(() => {
+                complimentContainer.style.opacity = 0;
+            }, currentSpeed * 0.8);
+            
+            currentIndex++;
+            
+            // Ускоряем показ по мере приближения к середине
+            if (currentIndex < compliments.length / 2) {
+                currentSpeed = Math.max(100, currentSpeed - 20);
+            } 
+            // Замедляем в конце
+            else if (currentIndex > compliments.length - 5) {
+                currentSpeed = Math.min(1000, currentSpeed + 100);
+            }
+            
+            // Обновляем интервал с новой скоростью
+            clearInterval(complimentInterval);
+            if (currentIndex < compliments.length) {
+                complimentInterval = setTimeout(showCompliment, currentSpeed);
+            }
+        }
+        
+        // Завершение показа комплиментов
+        function endCompliments() {
+            clearInterval(complimentInterval);
+            
+            // Затемняем экран
+            darkOverlay.style.backgroundColor = "rgba(0,0,0,0.8)";
+            
+            // Показываем сердце
+            setTimeout(() => {
+                canvas.style.opacity = 1;
+                initHeartAnimation();
+                
+                // Через 3 секунды показываем поздравление
+                setTimeout(() => {
+                    finalCongratulation.style.opacity = 1;
+                    
+                    // Постепенно показываем абзацы
+                    const paragraphs = finalCongratulation.querySelectorAll('p');
+                    paragraphs.forEach((p, i) => {
+                        setTimeout(() => {
+                            p.style.opacity = 1;
+                            p.style.transform = 'translateY(0)';
+                        }, i * 1000);
+                    });
+                }, 3000);
+            }, 1000);
+        }
+        
+        // Инициализация анимации сердца (исправленная оригинальная версия)
+        function initHeartAnimation() {
+            // Инициализация requestAnimationFrame
+            window.requestAnimationFrame = window.requestAnimationFrame || 
+                                         window.webkitRequestAnimationFrame || 
+                                         window.mozRequestAnimationFrame || 
+                                         function(callback) { window.setTimeout(callback, 1000/60); };
+            
+            // Проверка на мобильное устройство
+            var mobile = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent.toLowerCase()));
+            var koef = mobile ? 0.5 : 1;
+            var width = canvas.width = koef * innerWidth;
+            var height = canvas.height = koef * innerHeight;
+            var rand = Math.random;
+            
+            // Очищаем canvas
+            ctx.fillStyle = "rgba(0,0,0,1)";
+            ctx.fillRect(0, 0, width, height);
+
+            // Функция для получения позиции точки на сердце
+            var heartPosition = function(rad) {
+                return [Math.pow(Math.sin(rad), 3), 
+                       -(15 * Math.cos(rad) - 5 * Math.cos(2 * rad) - 2 * Math.cos(3 * rad) - Math.cos(4 * rad))];
+            };
+            
+            // Функция масштабирования и перемещения
+            var scaleAndTranslate = function(pos, sx, sy, dx, dy) {
+                return [dx + pos[0] * sx, dy + pos[1] * sy];
+            };
+
+            // Создаем точки для сердца
+            var traceCount = mobile ? 20 : 50;
+            var pointsOrigin = [];
+            var i;
+            var dr = mobile ? 0.3 : 0.1;
+            for (i = 0; i < Math.PI * 2; i += dr) {
+                pointsOrigin.push(scaleAndTranslate(heartPosition(i), 210, 13, 0, 0));
+            }
+            for (i = 0; i < Math.PI * 2; i += dr) {
+                pointsOrigin.push(scaleAndTranslate(heartPosition(i), 150, 9, 0, 0));
+            }
+            for (i = 0; i < Math.PI * 2; i += dr) {
+                pointsOrigin.push(scaleAndTranslate(heartPosition(i), 90, 5, 0, 0));
+            }
+            var heartPointsCount = pointsOrigin.length;
+
+            // Целевые точки
+            var targetPoints = [];
+            var pulse = function(kx, ky) {
+                for (i = 0; i < pointsOrigin.length; i++) {
+                    targetPoints[i] = [];
+                    targetPoints[i][0] = kx * pointsOrigin[i][0] + width / 2;
+                    targetPoints[i][1] = ky * pointsOrigin[i][1] + height / 2;
+                }
+            };
+
+            // Создаем частицы
+            var e = [];
+            for (i = 0; i < heartPointsCount; i++) {
+                var x = rand() * width;
+                var y = rand() * height;
+                e[i] = {
+                    vx: 0,
+                    vy: 0,
+                    R: 2,
+                    speed: rand() + 5,
+                    q: ~~(rand() * heartPointsCount),
+                    D: 2 * (i % 2) - 1,
+                    force: 0.2 * rand() + 0.7,
+                    f: "hsla(0," + ~~(40 * rand() + 60) + "%," + ~~(60 * rand() + 20) + "%,.3)",
+                    trace: []
+                };
+                for (var k = 0; k < traceCount; k++) e[i].trace[k] = {x: x, y: y};
+            }
+
+            // Настройки анимации
+            var config = {
+                traceK: 0.4,
+                timeDelta: 0.01
+            };
+
+            // Основной цикл анимации
+            var time = 0;
+            var loop = function() {
+                var n = -Math.cos(time);
+                pulse((1 + n) * .5, (1 + n) * .5);
+                time += ((Math.sin(time)) < 0 ? 9 : (n > 0.8) ? .2 : 1) * config.timeDelta;
+                
+                // Очищаем canvas с эффектом шлейфа
+                ctx.fillStyle = "rgba(0,0,0,.1)";
+                ctx.fillRect(0, 0, width, height);
+                
+                // Обновляем и рисуем частицы
+                for (i = e.length; i--;) {
+                    var u = e[i];
+                    var q = targetPoints[u.q];
+                    var dx = u.trace[0].x - q[0];
+                    var dy = u.trace[0].y - q[1];
+                    var length = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (10 > length) {
+                        if (0.95 < rand()) {
+                            u.q = ~~(rand() * heartPointsCount);
+                        } else {
+                            if (0.99 < rand()) {
+                                u.D *= -1;
+                            }
+                            u.q += u.D;
+                            u.q %= heartPointsCount;
+                            if (0 > u.q) {
+                                u.q += heartPointsCount;
+                            }
+                        }
+                    }
+                    
+                    u.vx += -dx / length * u.speed;
+                    u.vy += -dy / length * u.speed;
+                    u.trace[0].x += u.vx;
+                    u.trace[0].y += u.vy;
+                    u.vx *= u.force;
+                    u.vy *= u.force;
+                    
+                    for (k = 0; k < u.trace.length - 1;) {
+                        var T = u.trace[k];
+                        var N = u.trace[++k];
+                        N.x -= config.traceK * (N.x - T.x);
+                        N.y -= config.traceK * (N.y - T.y);
+                    }
+                    
+                    ctx.fillStyle = u.f;
+                    for (k = 0; k < u.trace.length; k++) {
+                        ctx.fillRect(u.trace[k].x, u.trace[k].y, 1, 1);
+                    }
+                }
+                
+                window.requestAnimationFrame(loop);
+            };
+            
+            // Запускаем анимацию
+            loop();
+        }
+        
+        // Начало показа при клике на цветок
+        flower.addEventListener('click', () => {
+            if (isStarted) return;
+            isStarted = true;
+            
+            // Скрываем цветок
+            flower.style.opacity = 0;
+            setTimeout(() => {
+                flower.style.display = 'none';
+            }, 500);
+            
+            // Инициализируем canvas
+            initCanvas();
+            
+            // Начинаем показ комплиментов
+            complimentInterval = setTimeout(showCompliment, currentSpeed);
+        });
+
+        // Добавляем дополнительный клик для показа сердца и поздравления
+        document.addEventListener('click', (e) => {
+            if (isStarted && e.target !== flower && currentIndex >= compliments.length) {
+                canvas.style.opacity = 1;
+                if (canvas.style.opacity === '1' && !canvas._animationStarted) {
+                    canvas._animationStarted = true;
+                    initHeartAnimation();
+                }
+                finalCongratulation.style.opacity = 1;
+                const paragraphs = finalCongratulation.querySelectorAll('p');
+                paragraphs.forEach((p, i) => {
+                    setTimeout(() => {
+                        p.style.opacity = 1;
+                        p.style.transform = 'translateY(0)';
+                    }, i * 1000);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
